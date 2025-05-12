@@ -3,18 +3,19 @@ import dj_database_url
 from .settings import *
 from .settings import BASE_DIR
 
-# Obtener el hostname externo desde las variables de entorno, o usar uno por defecto
-external_hostname = os.environ.get('RENDER_EXTERNAL_HOSTNAME', 'backend-maintcheck-1.onrender.com')
-
-# Configuración de hosts permitidos y CSRF
-ALLOWED_HOSTS = [external_hostname]
-CSRF_TRUSTED_ORIGINS = [f'https://{external_hostname}']
-
-# Configuraciones de seguridad y entorno
+# Seguridad
 DEBUG = False
 SECRET_KEY = os.environ.get('SECRET_KEY')
 
-# Middleware necesario para producción
+# Host confiable
+external_hostname = os.environ.get('RENDER_EXTERNAL_HOSTNAME')
+if external_hostname:
+    ALLOWED_HOSTS = ['backend-maintcheck-1.onrender.com', 'localhost', '127.0.0.1']
+    CSRF_TRUSTED_ORIGINS = [f'https://{external_hostname}']
+else:
+    raise RuntimeError("RENDER_EXTERNAL_HOSTNAME is not set in environment variables")
+
+# Middleware (incluye whitenoise)
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
     'whitenoise.middleware.WhiteNoiseMiddleware',
@@ -27,7 +28,7 @@ MIDDLEWARE = [
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
 ]
 
-# Almacenamiento de archivos estáticos
+# Archivos estáticos
 STORAGES = {
     "default": {
         "BACKEND": "django.core.files.storage.FileSystemStorage",
@@ -37,7 +38,7 @@ STORAGES = {
     },
 }
 
-# Configuración de la base de datos para Render
+# Base de datos
 DATABASES = {
     'default': dj_database_url.config(
         default=os.environ.get('DATABASE_URL'),
